@@ -4,6 +4,30 @@
 >
 [expression_name, argument_0, argument_1, ...]
 
+#### 类型断言表达式
+> array 断言输入是一个数组（可选择具有特定的项类型和长度）。如果在计算输入表达式时，它不是断言类型，则此断言将导致整个表达式中止。
+> ["array", type: "string" | "number" | "boolean", value]: array<type>
+> 
+> boolean 如果提供了多个值，则按顺序计算每个值，直到获得布尔值。如果没有输入是布尔值，则表达式是错误的。
+> ["boolean", value, fallback: value, fallback: value, ...]: boolean
+> 
+> number 如果提供多个​​值，则按顺序评估每个值，直到获得数字。如果没有输入是数字，则表达式是错误的。["number", value, fallback: value, fallback: value, ...]: number
+> 
+> string 如果提供了多个值，则按顺序评估每个值，直到获得字符串。如果没有输入是字符串，则表达式是错误的。["string", value, fallback: value, fallback: value, ...]: string
+
+#### 类型转换表达式	
+>to-boolean 当接着输入是空字符串，0， ，false，null或NaN 就为flase; 否则就是true。
+>["to-boolean", value]: boolean
+>
+>to-color 如果提供了多个值，则按顺序评估每个值，直到获得第一次成功转换。如果没有任何输入可以转换，则表达式是错误的。
+>["to-color", value, fallback: value, fallback: value, ...]: color
+>
+>to-number 	如果提供了多个值，则按顺序评估每个值，直到获得第一次成功转换。如果没有任何输入可以转换，则表达式是错误的。
+>["to-number", value, fallback: value, fallback: value, ...]: number
+>
+>to-string 如果输入是null，结果是""。如果输入是布尔值，则结果为"true"或"false"。如果输入是数字，则将其转换为ECMAScript语言规范的“NumberToString”算法所指定的字符串。如果输入是一种颜色，则将其转换为形式的字符串"rgba(r,g,b,a)"，其中r,, g和b为0到255之间的数字，a范围从0到1.否则，输入将转换为指定格式的字符串。JSON.stringifyECMAScript语言规范的功能。
+>["to-string", value]: string
+
 ####  Lookup 查找
 > ["at", number, array]: ItemType
 > 
@@ -47,4 +71,69 @@
 1,
 0.5
 ]
+
+>coalesce 依次计算每个表达式，直到获得第一个非空值，并返回该值。
+>["coalesce", OutputType, OutputType, ...]: OutputType
+
+> match 选择标签值与输入值匹配的输出，如果未找到匹配则选择回退值。输入可以是任何表达式（例如["get", "building_type"]）
+> ["match",
+    input: InputType (number or string),
+    label: InputType | [InputType, InputType, ...], output: OutputType,
+    label: InputType | [InputType, InputType, ...], output: OutputType,
+    ...,
+    fallback: OutputType
+]: OutputType
+
+
+#### 	插值
+
+> interpolate  通过在输入和输出值对之间进行插值（“停止”），产生连续，平滑的结果。input可以是任何数值表达式（例如，["get", "population"]）。停止输入必须是严格按升序排列的数字文字。输出类型必须是number，array<number>，或color.
+> 插值类型：
+
+>["linear"]：在一对停止之间线性插值，小于和略大于输入。
+["exponential", base]：在停靠点之间以指数方式插值，小于和大于输入。base控制输出增加的速率：较高的值使输出增加到更高的范围。当值接近1时，输出线性增加。
+["cubic-bezier", x1, y1, x2, y2]：使用给定控制点定义的三次贝塞尔曲线进行插值。
+>["interpolate",
+    interpolation: ["linear"] | ["exponential", base] | ["cubic-bezier", x1, y1, x2, y2 ],
+    input: number,
+    stop_input_1: number, stop_output_1: OutputType,
+    stop_input_n: number, stop_output_n: OutputType, ...
+]: OutputType (number, array<number>, or Color)
+
+> eg :
+> [
+     "interpolate",["linear"], ["zoom"],
+       16,
+       0,
+       16.05,
+      	["get", "height"]
+ ],
+ 
+> step 	通过评估由输入和输出值对（“停止”）定义的分段常数函数，生成离散的结果。input可以是任何数值表达式（例如，["get", "population"]）。输入必须是严格按升序排列的数字文字。返回小于输入的停止输出值，如果输入小于第一个停止，则返回第一个输入。
+> ["step",
+    input: number,
+    stop_output_0: OutputType,
+    stop_input_1: number, stop_output_1: OutputType,
+    stop_input_n: number, stop_output_n: OutputType, ...
+]: OutputType
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
