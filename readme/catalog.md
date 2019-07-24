@@ -15,7 +15,7 @@
 #### `catalog.md`目录说明.
 #### `mapbox_style.md`mapbox样式表达式说明文档.
 
-### `public`
+### `public` 该目录下的文件不会被压缩
 #### `index.html`设置项目的一些meta头信息.
 #### `lib`依赖文件夹.
 ##### `GeoGlobeJS.min.js`
@@ -24,4 +24,4 @@
 而官方只支持web墨卡托.
 ```
 
-
+### `dist`项目打包生成结果目录

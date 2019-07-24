@@ -28,6 +28,27 @@
     "less-loader": "^4.1.0",
     "vue-template-compiler": "^2.6.10"
   },
+  "author": {
+    "name": "oouyang",
+    "email": "812634676@qq.com",
+    "url": "https://ouyangresume.github.io"
+  },
+  "contributors": [
+    {
+      "name": "Your Friend",
+      "email": "friend@example.com",
+      "url": "http://friends-website.com"
+    },
+    {
+      "name": "Other Friend",
+      "email": "other@example.com",
+      "url": "http://other-website.com"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OuYangResume/geoCube.git"
+  },
   "eslintConfig": {
     "root": true,
     "env": {

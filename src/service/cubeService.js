@@ -1,11 +1,12 @@
 import cubeAxios from "../utils/axios/cubeAxios";
 
 class cubeService {
+    url = ""
     /**
      * 构造函数
      * @param {*} options 
      */
-    constructor(options) {
+    constructor(options) {  
     }
     /**
      * @description: 根据可视范围查询空间信息

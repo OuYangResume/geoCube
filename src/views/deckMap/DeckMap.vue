@@ -30,7 +30,8 @@ const mapConfig = {
 const AIR_PORTS =
   "https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_airports.geojson";
 import { Deck } from "@deck.gl/core";
-import { GeoJsonLayer, ArcLayer } from "@deck.gl/layers";
+import { PhongMaterial } from "@luma.gl/core";
+import { GeoJsonLayer, ArcLayer, PolygonLayer } from "@deck.gl/layers";
 import cubeService from "../../service/cubeService";
 export default {
   data() {
@@ -152,8 +153,15 @@ export default {
     },
     async initDeck() {
       let vm = this;
-      let DeckData = await vm.createDeckPointData();
-      console.log(DeckData);
+      let DeckPointData = await vm.createDeckPointData();
+      let DeckPolygonData = await vm.createDeckPolygonData();
+      console.log(DeckPolygonData);
+      const material = new PhongMaterial({
+        ambient: 0.1,
+        diffuse: 0.6,
+        shininess: 32,
+        specularColor: [60, 64, 70]
+      });
       const deck = new Deck({
         canvas: "deck-canvas",
         width: "100%",
@@ -175,9 +183,21 @@ export default {
           });
         },
         layers: [
+          //   new PolygonLayer({
+          //     id: "buildings",
+          //     data: DeckPolygonData.features,
+          //     extruded: true,
+          //     wireframe: false,
+          //     opacity: 0.4,
+          //     getPolygon: f => f.geometry.coordinates,
+          //     getElevation: f => f.properties.scalerank,
+          //     getFillColor: f => [Math.round(Math.random() * 100 + 10), 10, Math.round(Math.random() * 100 + 100)],
+          //     material
+          //   }),
+          
           new GeoJsonLayer({
             id: "airports",
-            data: DeckData,
+            data: DeckPointData,
             // Styles
             filled: true,
             pointRadiusMinPixels: 2,
@@ -191,37 +211,65 @@ export default {
             onClick: info =>
               // eslint-disable-next-line
               info.object && alert(`${info.object.properties.name}`)
-          })
+          }),
 
-          //     new ArcLayer({
-          //       id: "arcs",
-          //       data: DeckData,
-          //       pickable: true,
-          //       dataTransform: d =>
-          //         d.features.filter(f => f.properties.scalerank < 4),
-          //       // Styles
-          //       getSourcePosition: f => [113.91159785, 22.54725131], // London
-          //       getTargetPosition: f => f.geometry.coordinates,
-          //       getSourceColor: [0, 128, 200],
-          //       getTargetColor: [200, 0, 80],
-          //       getWidth: 10,
-          //       onHover: ({ object, x, y }) => {
-          //         console.log(object);
-          //         const tooltip = `${object} to ${object}`;
-          //         /* Update tooltip
-          //    http://deck.gl/#/documentation/developer-guide/adding-interactivity?section=example-display-a-tooltip-for-hovered-object
-          // */
-          //       }
-          //     })
+          new ArcLayer({
+            id: "arcs",
+            data: DeckPointData.features,
+            pickable: false,
+            // Styles
+            getSourcePosition: f => [113.91159785, 22.54725131], // London
+            getTargetPosition: f => f.geometry.coordinates,
+            getSourceColor: [0, 128, 200],
+            getTargetColor: [200, 0, 80],
+            getWidth: 10,
+            onHover: ({ object, x, y }) => {
+              console.log(object);
+              const tooltip = `${object.properties.name} to ${object.properties.name}`;
+              /* Update tooltip
+             http://deck.gl/#/documentation/developer-guide/adding-interactivity?section=example-display-a-tooltip-for-hovered-object
+          */
+            }
+          })
         ]
       });
     },
     /**
-     * @description: 构建Deck所需数据
+     * @description: 创建Deck_PolygonLayer所需数据
      * @param {type}
      * @return:
      */
-    async createDeckPointData(list) {
+    async createDeckPolygonData() {
+      let vm = this;
+      let queryType = true;
+      let FeatureCollection = {
+        type: "FeatureCollection",
+        features: []
+      };
+      await cubeService
+        .getAreaInfoByAreaCode(mapConfig.areacode, queryType)
+        .then(res => {
+          console.log(res);
+          let list = res.data.data.chirdAreaInfo;
+          for (let i in list) {
+            FeatureCollection.features.push({
+              type: "Feature",
+              properties: {
+                scalerank: i * 1000,
+                name: list[i]._source.areaname
+              },
+              geometry: list[i]._source.areainfo
+            });
+          }
+        });
+      return FeatureCollection;
+    },
+    /**
+     * @description: 构建Deck_GeoJsonLayer所需数据
+     * @param {type}
+     * @return:
+     */
+    async createDeckPointData() {
       let vm = this;
       let queryType = true;
       let FeatureCollection = {
@@ -265,7 +313,7 @@ export default {
         });
       }
       return FeatureCollection;
-    },
+    }
   }
 };
 </script>

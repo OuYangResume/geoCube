@@ -177,6 +177,24 @@ export default {
      */
     addMapEventListene() {
       let vm = this;
+      var nav = new mapboxgl.NavigationControl();
+      vm.map.addControl(nav, "bottom-right");
+      vm.map.on("load", () => {
+        //在地图加载完之后加载所要添加的图层和数据源
+        vm.addMapSourcesAndLayers();
+        //区划查询区划面信息
+        let queryType = false;
+        cubeService
+          .getAreaInfoByAreaCode(mapConfig.areacode, queryType)
+          .then(res => {
+            console.log(res);
+            let FeatureCollection = vm.convertFeatureCollection(
+              queryType ? res.data.data.chirdAreaInfo : res.data.data.list,
+              queryType
+            );
+            vm.map.getSource("bianjie").setData(FeatureCollection);
+          });
+      });
       vm.map.on("moveend", () => {
         //获取地图视图移动之后的层级
         let zoom = vm.map.getZoom();
@@ -197,27 +215,27 @@ export default {
             });
         }
       });
-      vm.map.on("load", () => {
-        //在地图加载完之后加载所要添加的图层和数据源
-        vm.addMapSourcesAndLayers();
-        //区划查询区划面信息
-        let queryType = false;
-        cubeService
-          .getAreaInfoByAreaCode(mapConfig.areacode, queryType)
-          .then(res => {
-            console.log(res);
-            let FeatureCollection = vm.convertFeatureCollection(
-              queryType ? res.data.data.chirdAreaInfo : res.data.data.list,
-              queryType
-            );
-            vm.map.getSource("bianjie").setData(FeatureCollection);
-          });
+      //定义楼栋图层的popup
+      let louDonPopup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        className: 'my-class'
       });
-      var hoveredStateId = null;
-      //   vm.map.on("mousemove", "bianjie_layer", function(e) {
-      //     console.log(e);
-      //   });
-      vm.map.on("mouseleave", "bianjie_layer", function() {});
+      vm.map.on("mousemove", "loudon_layer", function(e) {
+        //设置鼠标样式
+        vm.map.getCanvas().style.cursor = "pointer";
+        let coordinates = e.lngLat;
+        let description = e.features[0].properties.areaname;
+        louDonPopup
+          .setLngLat(coordinates)
+          .setHTML(description)
+          .addTo(vm.map);
+      });
+      vm.map.on("mouseleave", "loudon_layer", function() {
+        //还原鼠标样式
+        vm.map.getCanvas().style.cursor = "grab";
+        louDonPopup.remove();
+      });
     },
     /**
      * @description: 多面构建FeatureCollection对象
@@ -238,7 +256,8 @@ export default {
         FeatureCollection.features.push({
           type: "Feature",
           properties: {
-            type:i,
+            areaname: list[i].areaname != " " ? list[i].areaname : "暂无数据",
+            type: i,
             height: Math.round(Math.random() * 100 + 10),
             min_height: 0
           },
@@ -277,5 +296,9 @@ export default {
 .mapcontainer {
   width: 100vw;
   height: 80vh;
+}
+.my-class{
+    background-color: aqua;
+    width: 100px;
 }
 </style>
