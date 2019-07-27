@@ -222,6 +222,7 @@ export default {
         className: 'my-class'
       });
       vm.map.on("mousemove", "loudon_layer", function(e) {
+          console.log(e)
         //设置鼠标样式
         vm.map.getCanvas().style.cursor = "pointer";
         let coordinates = e.lngLat;
