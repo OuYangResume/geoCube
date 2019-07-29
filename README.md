@@ -30,4 +30,4 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 
 ###  文档说明
-在项目的readme文件夹下。
+在项目的readme文件夹下。~
