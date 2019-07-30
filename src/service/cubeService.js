@@ -1,7 +1,6 @@
 import cubeAxios from "../utils/axios/cubeAxios";
 
 class cubeService {
-    url = ""
     /**
      * 构造函数
      * @param {*} options 
