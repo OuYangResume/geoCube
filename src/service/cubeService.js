@@ -6,7 +6,7 @@ class cubeService {
      * 构造函数
      * @param {*} options 
      */
-    constructor(options) {  
+    constructor(options) {
     }
     /**
      * @description: 根据可视范围查询空间信息
@@ -53,6 +53,35 @@ class cubeService {
             areacode: areacode
         };
         let url1 = "http://192.168.1.192:9000/ksj_api/common_api/getAreaBase";
+        return new Promise((resolve, reject) => {
+            cubeAxios
+                .Ajax(url1, params)
+                .then(res => {
+                    resolve(res);
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
+    /**
+    * @description: 多条件地址列表分页排序查询检索适用范围。
+    * @param {type}
+    * @return:
+    */
+    static getLoadInfoByAreaCode(areacode) {
+        let params = {
+            request_type: "post",
+            paramCodeList: "OT6033", //维度参数固定
+            areacode: areacode,
+            dzlx: "4", //1房间，2小区，3楼栋，4道路
+            cxtj: "", //过滤条件，支持地址名和地址编码；可以不传
+            page: "1",
+            pageSize: "100",
+            sort: "", //支持地址名称排序(name)，地址编码排序(code) 如果不传默认不排序
+            sortType: "" //降序(desc)，升序(asc),如果不传默认降序
+        };
+        let url1 = "http://192.168.1.192:9000/ksj_api/common_api/getKsjInfo";
         return new Promise((resolve, reject) => {
             cubeAxios
                 .Ajax(url1, params)

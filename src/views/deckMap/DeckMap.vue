@@ -71,6 +71,14 @@ export default {
                 features: [],
                 type: "FeatureCollection"
               }
+            },
+            //道路
+            load: {
+              type: "geojson",
+              data: {
+                features: [],
+                type: "FeatureCollection"
+              }
             }
           },
           layers: [
@@ -103,6 +111,20 @@ export default {
                 "line-color": "#00FF00",
                 "line-width": 4
               }
+            },
+            //道路图层
+            {
+              id: "load_layer",
+              type: "line",
+              source: "load",
+              layout: {
+                "line-join": "round",
+                "line-cap": "round"
+              },
+              paint: {
+                "line-color": "red",
+                "line-width": 4
+              }
             }
           ]
         }, //mapConfig.style,
@@ -133,10 +155,23 @@ export default {
       });
       vm.map.on("load", () => {
         console.log(vm.map.getZoom());
-
-        vm.getLoadInfoByAreaCode(mapConfig.areacode).then(res=>{
-                console.log(res);
-        })
+        //获取道路信息数据
+        cubeService.getLoadInfoByAreaCode(mapConfig.areacode).then(res => {
+          console.log(res);
+          let list = res.data.data.list;
+          let FeatureCollection = {
+            type: "FeatureCollection",
+            features: []
+          };
+          for (let i in list) {
+            FeatureCollection.features.push({
+              type: "Feature",
+              properties: {},
+              geometry: list[i]._source.areainfo
+            });
+          }
+          vm.map.getSource("load").setData(FeatureCollection);
+        });
         //区划查询区划面信息
         let queryType = true;
         cubeService
@@ -305,7 +340,6 @@ export default {
      * @return:
      */
     convertFeatureCollection(list, type = true) {
-      let geometry;
       let FeatureCollection = {
         type: "FeatureCollection",
         features: []
@@ -318,35 +352,6 @@ export default {
         });
       }
       return FeatureCollection;
-    },
-    /**
-     * @description: 多条件地址列表分页排序查询检索适用范围。
-     * @param {type}
-     * @return:
-     */
-    getLoadInfoByAreaCode(areacode) {
-      let params = {
-        request_type: "post",
-        paramCodeList: "OT6033", //维度参数固定
-        areacode: areacode,
-        dzlx: "4", //1房间，2小区，3楼栋，4道路
-        cxtj: "", //过滤条件，支持地址名和地址编码；可以不传
-        page: "1",
-        pageSize: "100",
-        sort: "", //支持地址名称排序(name)，地址编码排序(code) 如果不传默认不排序
-        sortType: "" //降序(desc)，升序(asc),如果不传默认降序
-      };
-      let url1 = "http://192.168.1.192:9000/ksj_api/common_api/getKsjInfo";
-      return new Promise((resolve, reject) => {
-        cubeAxios
-          .Ajax(url1, params)
-          .then(res => {
-            resolve(res);
-          })
-          .catch(error => {
-            reject(error);
-          });
-      });
     }
   }
 };
