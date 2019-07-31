@@ -4,6 +4,7 @@
       <router-link to="/">Home</router-link>|
       <router-link to="/about">About</router-link>|
       <router-link to="/deck">Deck.gl</router-link>|
+      <router-link to="/mapbox">Mapbox</router-link>
     </div>
     <router-view />
   </div>

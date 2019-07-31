@@ -92,6 +92,31 @@ class cubeService {
                 });
         });
     }
+    /**
+     * @description: 根据坐标查询该坐标所在的区划信息。
+     * @param {paramType}  级别类型:1区2街道3社区4网格5楼栋
+     * @param {point} 坐标点位信息
+     * @return: 
+     */
+    static getAreaInfoByPoint(point, paramType) {
+        let params = {
+            request_type: "post",
+            paramCodeList: "KJ5000",
+            coordinates: point,
+            paramType: paramType
+        };
+        let url1 = "http://192.168.1.192:9000/ksj_api/common_api/getAreaBase";
+        return new Promise((resolve, reject) => {
+            cubeAxios
+                .Ajax(url1, params)
+                .then(res => {
+                    resolve(res);
+                })
+                .catch(error => {
+                    reject(error);
+                });
+        });
+    }
 }
 
 export default cubeService

@@ -21,10 +21,15 @@ export default new Router({
       // which is lazy-loaded when the route is visited.
       component: () =>
         import(/* webpackChunkName: "about" */ "@/views/About.vue")
-    },{
-      path:"/deck",
-      name:'deck.gl',
-      component:()=>import("@/views/deckMap/DeckMap.vue")
+    }, {
+      path: "/deck",
+      name: 'deck.gl',
+      component: () => import("@/views/deckMap/DeckMap.vue")
+    },
+    {
+      path: "/mapbox",
+      name: 'mapbox',
+      component: () => import("@/views/mapbox/Mapbox.vue")
     }
 
   ]
