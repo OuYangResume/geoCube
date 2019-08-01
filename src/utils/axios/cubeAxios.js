@@ -25,7 +25,11 @@ function getCubeToken() {
     params: params
   })
     .then(res => {
-      return res;
+      if(res.data.success){
+        return res;
+      }else{
+        console.log("获取token失败")
+      }
     })
     .catch(error => {
       reject(error);

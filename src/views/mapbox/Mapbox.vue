@@ -1,6 +1,7 @@
 <template>
   <div>
     <p>{{areaname}}</p>
+    <OverviewMap class="miniMap" :areacode="areacode" :FeatureCollection="FeatureCollection"></OverviewMap>
     <div :id="mapId" class="mapcontainer"></div>
   </div>
 </template>
@@ -26,13 +27,22 @@ const mapConfig = {
   units: "degrees",
   ldHeight: 3
 };
+import OverviewMap from "../../components/OverviewMap.vue";
 import cubeService from "../../service/cubeService";
 export default {
+  components: {
+    OverviewMap
+  },
   data() {
     return {
       map: null, //全局map对象
       areacode: mapConfig.areacode, //赋值成全局变量
-      areaname: mapConfig.areaname
+      areaname: mapConfig.areaname,
+      parentcode: "4403",
+      FeatureCollection: {
+        type: "FeatureCollection",
+        features: []
+      }
     };
   },
   props: {
@@ -211,17 +221,7 @@ export default {
         //在地图加载完之后加载所要添加的图层和数据源
         vm.addMapSourcesAndLayers();
         //区划查询区划面信息
-        let queryType = false;
-        cubeService
-          .getAreaInfoByAreaCode(mapConfig.areacode, queryType)
-          .then(res => {
-            console.log(res);
-            let FeatureCollection = vm.convertFeatureCollection(
-              queryType ? res.data.data.chirdAreaInfo : res.data.data.list,
-              queryType
-            );
-            vm.map.getSource("bianjie").setData(FeatureCollection);
-          });
+        vm.drawLayerByAreacode(mapConfig.areacode, false);
       });
       vm.map.on("moveend", () => {
         //触发视图的中心点事件
@@ -280,10 +280,10 @@ export default {
       let point = [center.lng, center.lat];
       // console.log(zoom, center);
       let paramType;
-      if (zoom < 13) {
+      if (zoom < 12) {
         // 小地图展示全市地图，获取区的信息
         paramType = "1";
-      } else if (zoom >= 13 && zoom < 15) {
+      } else if (zoom >= 12 && zoom < 15) {
         // 小地图展示区级地图，获取街道的信息
         paramType = "2";
       } else if (zoom >= 15 && zoom < 17) {
@@ -307,39 +307,34 @@ export default {
      */
     onAreaInfoReceived(data) {
       let vm = this;
-      console.log(data);
-      let code, name;
+      let resParentcode;
       // 先判断是否获取到数据
       if (data.success != true) {
+        console.log("根据坐标查询数据失败");
         return;
-      } else {
-        code = data.data.areacode;
-        name = data.data.areaname;
       }
-      // 行政区划发生改变
-      if (code !== vm.areacode) {
-        //给全局变量赋值
-        vm.areacode = code;
-        vm.areaname = name;
-        //当parentcode为undefined时
-        let parentcode = data.data.parentcode || mapConfig.areacode;
-        let queryType = true;
-        cubeService.getAreaInfoByAreaCode(parentcode, queryType).then(res => {
-          console.log(res);
-          let FeatureCollection = vm.convertFeatureCollection(
-            queryType ? res.data.data.chirdAreaInfo : res.data.data.list,
-            queryType
-          );
-          vm.map.getSource("bianjie").setData(FeatureCollection);
-          //高亮当前区划
-          vm.map.setFilter("bianjie-highlighted_layer", [
-            "==",
-            "areacode",
-            code
-          ]);
-          // vm.highLightBianjie(code);
-        });
+      //给全局变量赋值
+      vm.areacode = data.data.areacode;
+      vm.areaname = data.data.areaname;
+      //当parentcode为undefined时,则绘制当前区划
+      resParentcode = data.data.parentcode;
+      if (resParentcode == undefined) {
+        vm.drawLayerByAreacode(vm.areacode, false);
+        vm.parentcode = resParentcode;
       }
+      // 行政父区划发生改变才需要重新请求数据
+      else if (resParentcode !== vm.parentcode) {
+        vm.parentcode = resParentcode;
+        //绘制父查子的区划
+        vm.drawLayerByAreacode(vm.parentcode, true);
+      }
+      //高亮当前区划
+      vm.map.setFilter("bianjie-highlighted_layer", [
+        "==",
+        "areacode",
+        vm.areacode
+      ]);
+      // vm.highLightBianjie(code);
     },
     /**
      * @description: 高亮当前区划=====》会存在显示不全的问题，必须用两个图层来渲染。
@@ -358,6 +353,23 @@ export default {
       ]);
     },
     /**
+     * @description: 绘制当前areacode的图层
+     * @param {type}
+     * @param {queryType} default为false 绘制当前
+     * @return:
+     */
+    drawLayerByAreacode(areacode, queryType) {
+      let vm = this;
+      cubeService.getAreaInfoByAreaCode(areacode, queryType).then(res => {
+        console.log(res);
+        vm.FeatureCollection = vm.convertFeatureCollection(
+          queryType ? res.data.data.chirdAreaInfo : res.data.data.list,
+          queryType
+        );
+        vm.map.getSource("bianjie").setData(vm.FeatureCollection);
+      });
+    },
+    /**
      * @description: 多面构建FeatureCollection对象
      * @param {type}
      * @return:
@@ -373,10 +385,20 @@ export default {
         return FeatureCollection;
       }
       for (let i in list) {
+        let areaname;
+        if (!type) {
+          if (list[i].areaname != " ") {
+            areaname = list[i].areaname;
+          } else {
+            areaname = "暂无数据";
+          }
+        } else {
+          areaname = list[i]._source.areaname;
+        }
         FeatureCollection.features.push({
           type: "Feature",
           properties: {
-            areaname: list[i].areaname != " " ? list[i].areaname : "暂无数据",
+            areaname: areaname,
             type: i,
             height: Math.round(Math.random() * 100 + 10),
             min_height: 0,
@@ -415,6 +437,12 @@ export default {
 };
 </script>
 <style lang="less" scoped>
+.miniMap {
+  position: absolute;
+  width: 300px;
+  height: 400px;
+  z-index: 100;
+}
 .mapcontainer {
   width: 100vw;
   height: 80vh;
