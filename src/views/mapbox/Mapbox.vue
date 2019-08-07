@@ -185,6 +185,7 @@ export default {
               "red",
               "#aaa"
             ],
+            "fill-extrusion-translate":[2,2],
             "fill-extrusion-height": [
               "interpolate",
               ["linear"],
@@ -403,7 +404,8 @@ export default {
             height: Math.round(Math.random() * 100 + 10),
             min_height: 0,
             areacode: type ? list[i]._source.areacode : list[i].areacode,
-            color: false
+            color: false,
+            location:type ? list[i]._source.location.coordinates : list[i].location.coordinates
           },
           geometry: type ? list[i]._source.areainfo : list[i].areainfo
         });

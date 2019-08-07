@@ -25,6 +25,7 @@ const mapConfig = {
   ldHeight: 3
 };
 import cubeService from "../service/cubeService";
+import * as turf from "@turf/turf";
 export default {
   data() {
     return {
@@ -45,13 +46,16 @@ export default {
     }
   },
   watch: {
+    //监听areacode的变化
     areacode: function(val) {
-      console.log(val);
-      // console.log(this.FeatureCollection)
       this.highLightBianjie(val);
     },
     FeatureCollection: function(val) {
-      console.log(val);
+      //边界自适应,指定地理范围内的可见区域.
+      var bbox = turf.bbox(val);
+      this.map.fitBounds(bbox, {
+        padding: { top: 5, bottom: 0, left: 0, right: 10 }
+      });
       this.map.getSource("bianjie").setData(val);
     }
   },
@@ -73,7 +77,7 @@ export default {
         minZoom: 10,
         maxZoom: 24,
         center: [113.923, 22.546],
-        zoom: 8,
+        zoom: 9,
         epsg: "EPSG:4490",
         doubleClickZoom: false,
         isIntScrollZoom: false, //缩放级别是否为整数处理模式
@@ -93,7 +97,7 @@ export default {
         //在地图加载完之后加载所要添加的图层和数据源
         vm.addMapSourcesAndLayers();
       });
-       //定义楼栋图层的popup
+      //定义楼栋图层的popup
       let louDonPopup = new mapboxgl.Popup({
         closeButton: false,
         closeOnClick: false,
@@ -113,6 +117,34 @@ export default {
         //还原鼠标样式
         vm.map.getCanvas().style.cursor = "grab";
         louDonPopup.remove();
+      });
+      //鹰眼图的单击事件，并触发父组件的视图改变事件
+      vm.map.on("click", "bianjie_layer", function(e) {
+        vm.$parent.map.flyTo({
+          center: JSON.parse(e.features[0].properties.location)
+        });
+      });
+      //鹰眼图的双击事件，并触发父组件的视图改变事件
+      vm.map.on("dblclick", "bianjie_layer", function(e) {
+        console.log(e);
+        var zoom;
+        switch (e.features[0].properties.areacode.length) {
+          case 6:
+            zoom = 14; //区级
+            break;
+          case 9:
+            zoom = 16; //街道
+            break;
+          case 12:
+            zoom = 18; //社区
+            break;
+        }
+        if (zoom != undefined) {
+          vm.$parent.map.flyTo({
+            center: JSON.parse(e.features[0].properties.location),
+            zoom: zoom
+          });
+        }
       });
     },
     /**
