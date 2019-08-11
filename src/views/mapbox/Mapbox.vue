@@ -1,7 +1,20 @@
 <template>
   <div>
     <p>{{areaname}}</p>
-    <OverviewMap class="miniMap" :areacode="areacode" :FeatureCollection="FeatureCollection"></OverviewMap>
+    <el-tabs class="miniMap" v-model="activeName" @tab-click="handleClick">
+      <el-tab-pane label="鹰眼图" name="first">
+        <OverviewMap
+          style="height:400px"
+          :areacode="areacode"
+          :FeatureCollection="FeatureCollection"
+          v-on:flyto="mapFlyToEvent"
+        ></OverviewMap>
+      </el-tab-pane>
+      <el-tab-pane label="区划选择" name="second">
+        <RegionalTree :areacode="areacode" :FeatureCollection="FeatureCollection"></RegionalTree>
+      </el-tab-pane>
+    </el-tabs>
+
     <div :id="mapId" class="mapcontainer"></div>
   </div>
 </template>
@@ -28,10 +41,12 @@ const mapConfig = {
   ldHeight: 3
 };
 import OverviewMap from "../../components/OverviewMap.vue";
+import RegionalTree from "../../components/RegionalTree.vue";
 import cubeService from "../../service/cubeService";
 export default {
   components: {
-    OverviewMap
+    OverviewMap,
+    RegionalTree
   },
   data() {
     return {
@@ -42,7 +57,8 @@ export default {
       FeatureCollection: {
         type: "FeatureCollection",
         features: []
-      }
+      },
+      activeName: "second"
     };
   },
   props: {
@@ -56,6 +72,9 @@ export default {
     this.initMap();
   },
   methods: {
+    handleClick(tab, event) {
+      console.log(tab, event);
+    },
     /**
      * @description: 初始化底图
      * @param {type}
@@ -185,7 +204,7 @@ export default {
               "red",
               "#aaa"
             ],
-            "fill-extrusion-translate":[2,2],
+            "fill-extrusion-translate": [2, 2],
             "fill-extrusion-height": [
               "interpolate",
               ["linear"],
@@ -266,6 +285,21 @@ export default {
         vm.map.getCanvas().style.cursor = "grab";
         louDonPopup.remove();
       });
+    },
+    /**
+     * @description: map的飞行事件
+     * @param {type}
+     * @return:
+     */
+    mapFlyToEvent(location, zoom) {
+      let flyObj = {
+        center: location,
+        zoom: zoom
+      };
+      if (zoom == undefined) {
+        delete flyObj.zoom;
+      }
+      this.map.flyTo(flyObj);
     },
     /**
      * @description: 改变视图的中心点事件
@@ -405,7 +439,9 @@ export default {
             min_height: 0,
             areacode: type ? list[i]._source.areacode : list[i].areacode,
             color: false,
-            location:type ? list[i]._source.location.coordinates : list[i].location.coordinates
+            location: type
+              ? list[i]._source.location.coordinates
+              : list[i].location.coordinates
           },
           geometry: type ? list[i]._source.areainfo : list[i].areainfo
         });
@@ -441,7 +477,7 @@ export default {
 <style lang="less" scoped>
 .miniMap {
   position: absolute;
-  width: 300px;
+  width: 400px;
   height: 400px;
   z-index: 100;
 }

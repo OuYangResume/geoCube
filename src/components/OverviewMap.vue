@@ -120,9 +120,11 @@ export default {
       });
       //鹰眼图的单击事件，并触发父组件的视图改变事件
       vm.map.on("click", "bianjie_layer", function(e) {
-        vm.$parent.map.flyTo({
-          center: JSON.parse(e.features[0].properties.location)
-        });
+        let zoom;
+        vm.$emit('flyto',JSON.parse(e.features[0].properties.location),zoom);
+        // vm.$parent.map.flyTo({
+        //   center: JSON.parse(e.features[0].properties.location)
+        // });
       });
       //鹰眼图的双击事件，并触发父组件的视图改变事件
       vm.map.on("dblclick", "bianjie_layer", function(e) {
@@ -140,10 +142,11 @@ export default {
             break;
         }
         if (zoom != undefined) {
-          vm.$parent.map.flyTo({
-            center: JSON.parse(e.features[0].properties.location),
-            zoom: zoom
-          });
+          vm.$emit('flyto',JSON.parse(e.features[0].properties.location),zoom);
+          // vm.$parent.map.flyTo({
+          //   center: JSON.parse(e.features[0].properties.location),
+          //   zoom: zoom
+          // });
         }
       });
     },
