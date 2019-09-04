@@ -1,3 +1,10 @@
+<!--
+ * @Description: In User Settings Edit
+ * @Author: your name
+ * @Date: 2019-08-30 09:02:58
+ * @LastEditTime: 2019-09-04 16:00:46
+ * @LastEditors: Please set LastEditors
+ -->
 <template>
   <div>
     <p>{{areaname}}</p>
@@ -11,7 +18,7 @@
         ></OverviewMap>
       </el-tab-pane>
       <el-tab-pane label="区划选择" name="second">
-        <RegionalTree :areacode="areacode" :FeatureCollection="FeatureCollection"></RegionalTree>
+        <RegionalTree :areacode="areacode" v-on:flyto="mapFlyToEvent"></RegionalTree>
       </el-tab-pane>
     </el-tabs>
 
@@ -43,6 +50,8 @@ const mapConfig = {
 import OverviewMap from "../../components/OverviewMap.vue";
 import RegionalTree from "../../components/RegionalTree.vue";
 import cubeService from "../../service/cubeService";
+import Vue from "vue";
+
 export default {
   components: {
     OverviewMap,
@@ -58,8 +67,8 @@ export default {
         type: "FeatureCollection",
         features: []
       },
-      activeName: "second"
-    };
+      activeName:"second",//鹰眼图与区划切换
+    }
   },
   props: {
     mapId: {
@@ -214,6 +223,7 @@ export default {
               16.05,
               ["get", "height"]
             ],
+
             "fill-extrusion-base": [
               "interpolate",
               ["linear"],
@@ -328,6 +338,9 @@ export default {
         // 小地图展示社区地图，获取网格的信息
         paramType = "4";
       }
+
+      // 区  11  街道12  社区15  网格17
+
       cubeService
         .getAreaInfoByPoint(JSON.stringify(point), paramType)
         .then(res => {
@@ -351,6 +364,7 @@ export default {
       //给全局变量赋值
       vm.areacode = data.data.areacode;
       vm.areaname = data.data.areaname;
+
       //当parentcode为undefined时,则绘制当前区划
       resParentcode = data.data.parentcode;
       if (resParentcode == undefined) {
@@ -388,15 +402,16 @@ export default {
       ]);
     },
     /**
-     * @description: 绘制当前areacode的图层
-     * @param {type}
-     * @param {queryType} default为false 绘制当前
+     * @description: 绘制图层
+     * @param {areacode}   区划编码
+     * @param {queryType} default为true 绘制父查子图层
      * @return:
      */
-    drawLayerByAreacode(areacode, queryType) {
+    drawLayerByAreacode(areacode, queryType= true) {
       let vm = this;
       cubeService.getAreaInfoByAreaCode(areacode, queryType).then(res => {
         console.log(res);
+        //2种情况
         vm.FeatureCollection = vm.convertFeatureCollection(
           queryType ? res.data.data.chirdAreaInfo : res.data.data.list,
           queryType
@@ -419,6 +434,7 @@ export default {
         console.log("请检查传入的list是否为空");
         return FeatureCollection;
       }
+      //2种情况数据处理
       for (let i in list) {
         let areaname;
         if (!type) {
@@ -481,10 +497,12 @@ export default {
   height: 400px;
   z-index: 100;
 }
+
 .mapcontainer {
   width: 100vw;
   height: 80vh;
 }
+
 .my-class {
   background-color: aqua;
   width: 100px;

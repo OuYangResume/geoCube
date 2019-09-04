@@ -1,3 +1,10 @@
+<!--
+ * @Description: In User Settings Edit
+ * @Author: your name
+ * @Date: 2019-07-22 11:44:31
+ * @LastEditTime: 2019-09-02 15:32:09
+ * @LastEditors: Please set LastEditors
+ -->
 <template>
   <div :id="mapId" class="mapcontainer"></div>
 </template>
@@ -24,6 +31,8 @@ const mapConfig = {
   ldHeight: 3
 };
 import cubeService from "../service/cubeService";
+import * as THREE from "three";
+import mapboxgl from "mapbox-gl";
 export default {
   data() {
     return {
@@ -179,9 +188,13 @@ export default {
       let vm = this;
       var nav = new mapboxgl.NavigationControl();
       vm.map.addControl(nav, "bottom-right");
+      
+     // let customLayer = vm.CustomLayer();
       vm.map.on("load", () => {
         //在地图加载完之后加载所要添加的图层和数据源
         vm.addMapSourcesAndLayers();
+
+       // vm.map.addLayer(customLayer, "waterway-label");
         //区划查询区划面信息
         let queryType = false;
         cubeService
@@ -219,10 +232,10 @@ export default {
       let louDonPopup = new mapboxgl.Popup({
         closeButton: false,
         closeOnClick: false,
-        className: 'my-class'
+        className: "my-class"
       });
       vm.map.on("mousemove", "loudon_layer", function(e) {
-          console.log(e)
+        console.log(e);
         //设置鼠标样式
         vm.map.getCanvas().style.cursor = "pointer";
         let coordinates = e.lngLat;
@@ -237,6 +250,199 @@ export default {
         vm.map.getCanvas().style.cursor = "grab";
         louDonPopup.remove();
       });
+    },
+
+    /**
+     * @description: 自定义图层
+     * @param {type}
+     * @return:
+     */
+    CustomLayer() {
+      // parameters to ensure the model is georeferenced correctly on the map
+      var modelOrigin = [113.923, 22.546];
+      var modelAltitude = 0;
+      var modelRotate = [Math.PI / 2, 0, 0];
+
+      var modelAsMercatorCoordinate = mapboxgl.MercatorCoordinate.fromLngLat(
+        modelOrigin,
+        modelAltitude
+      );
+
+      // transformation parameters to position, rotate and scale the 3D model onto the map
+      var modelTransform = {
+        translateX: modelAsMercatorCoordinate.x,
+        translateY: modelAsMercatorCoordinate.y,
+        translateZ: modelAsMercatorCoordinate.z,
+        rotateX: modelRotate[0],
+        rotateY: modelRotate[1],
+        rotateZ: modelRotate[2],
+        /* Since our 3D model is in real world meters, a scale transform needs to be
+         * applied since the CustomLayerInterface expects units in MercatorCoordinates.
+         */
+        scale: modelAsMercatorCoordinate.meterInMercatorCoordinateUnits()
+      };
+
+      // var THREE = window.THREE;
+
+      // configuration of the custom layer for a 3D model per the CustomLayerInterface
+      var customLayer = {
+        id: "3d-model",
+        type: "custom",
+        renderingMode: "3d",
+        onAdd: function(map, gl) {
+          this.camera = new THREE.Camera();
+          this.scene = new THREE.Scene();
+
+          // create two three.js lights to illuminate the model
+          var directionalLight = new THREE.DirectionalLight(0xffffff);
+          directionalLight.position.set(0, -70, 100).normalize();
+          this.scene.add(directionalLight);
+
+          var directionalLight2 = new THREE.DirectionalLight(0xffffff);
+          directionalLight2.position.set(0, 70, 100).normalize();
+          this.scene.add(directionalLight2);
+
+          // use the three.js GLTF loader to add the 3D model to the three.js scene
+          var loader = new THREE.GLTFLoader();
+          loader.load(
+            "https://docs.mapbox.com/mapbox-gl-js/assets/34M_17/34M_17.gltf",
+            function(gltf) {
+              this.scene.add(gltf.scene);
+            }.bind(this)
+          );
+          this.map = map;
+
+          // use the Mapbox GL JS map canvas for three.js
+          this.renderer = new THREE.WebGLRenderer({
+            canvas: map.getCanvas(),
+            context: gl,
+            antialias: true
+          });
+
+          this.renderer.autoClear = false;
+        },
+        render: function(gl, matrix) {
+          var rotationX = new THREE.Matrix4().makeRotationAxis(
+            new THREE.Vector3(1, 0, 0),
+            modelTransform.rotateX
+          );
+          var rotationY = new THREE.Matrix4().makeRotationAxis(
+            new THREE.Vector3(0, 1, 0),
+            modelTransform.rotateY
+          );
+          var rotationZ = new THREE.Matrix4().makeRotationAxis(
+            new THREE.Vector3(0, 0, 1),
+            modelTransform.rotateZ
+          );
+
+          var m = new THREE.Matrix4().fromArray(matrix);
+          var l = new THREE.Matrix4()
+            .makeTranslation(
+              modelTransform.translateX,
+              modelTransform.translateY,
+              modelTransform.translateZ
+            )
+            .scale(
+              new THREE.Vector3(
+                modelTransform.scale,
+                -modelTransform.scale,
+                modelTransform.scale
+              )
+            )
+            .multiply(rotationX)
+            .multiply(rotationY)
+            .multiply(rotationZ);
+
+          this.camera.projectionMatrix.elements = matrix;
+          this.camera.projectionMatrix = m.multiply(l);
+          this.renderer.state.reset();
+          this.renderer.render(this.scene, this.camera);
+          this.map.triggerRepaint();
+        }
+      };
+
+     // return customLayer;
+
+      /////////////////
+      var highlightLayer = {
+        id: "highlight",
+        type: "custom",
+
+        onAdd: function(map, gl) {
+          var vertexSource =
+            "" +
+            "uniform mat4 u_matrix;" +
+            "attribute vec2 a_pos;" +
+            "void main() {" +
+            "    gl_Position = u_matrix * vec4(a_pos, 0.0, 1.0);" +
+            "}";
+
+          var fragmentSource =
+            "" +
+            "void main() {" +
+            "    gl_FragColor = vec4(1.0, 0.0, 0.0, 0.5);" +
+            "}";
+
+          var vertexShader = gl.createShader(gl.VERTEX_SHADER);
+          gl.shaderSource(vertexShader, vertexSource);
+          gl.compileShader(vertexShader);
+          var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+          gl.shaderSource(fragmentShader, fragmentSource);
+          gl.compileShader(fragmentShader);
+
+          this.program = gl.createProgram();
+          gl.attachShader(this.program, vertexShader);
+          gl.attachShader(this.program, fragmentShader);
+          gl.linkProgram(this.program);
+
+          this.aPos = gl.getAttribLocation(this.program, "a_pos");
+
+          var helsinki = mapboxgl.MercatorCoordinate.fromLngLat({
+            lng: 113.923,
+            lat: 23.546
+          });
+          var berlin = mapboxgl.MercatorCoordinate.fromLngLat({
+            lng: 113.923,
+            lat: 22.546
+          });
+          var kyiv = mapboxgl.MercatorCoordinate.fromLngLat({
+            lng: 113.823,
+            lat: 22.646
+          });
+
+          this.buffer = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+          gl.bufferData(
+            gl.ARRAY_BUFFER,
+            new Float32Array([
+              helsinki.x,
+              helsinki.y,
+              berlin.x,
+              berlin.y,
+              kyiv.x,
+              kyiv.y
+            ]),
+            gl.STATIC_DRAW
+          );
+        },
+
+        render: function(gl, matrix) {
+          gl.useProgram(this.program);
+          gl.uniformMatrix4fv(
+            gl.getUniformLocation(this.program, "u_matrix"),
+            false,
+            matrix
+          );
+          gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+          gl.enableVertexAttribArray(this.aPos);
+          gl.vertexAttribPointer(this.aPos, 2, gl.FLOAT, false, 0, 0);
+          gl.enable(gl.BLEND);
+          gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 3);
+        }
+      };
+
+      return highlightLayer;
     },
     /**
      * @description: 多面构建FeatureCollection对象
@@ -298,8 +504,8 @@ export default {
   width: 100vw;
   height: 80vh;
 }
-.my-class{
-    background-color: aqua;
-    width: 100px;
+.my-class {
+  background-color: aqua;
+  width: 100px;
 }
 </style>

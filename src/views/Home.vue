@@ -1,3 +1,10 @@
+<!--
+ * @Description: In User Settings Edit
+ * @Author: your name
+ * @Date: 2019-07-22 09:30:11
+ * @LastEditTime: 2019-08-20 18:11:51
+ * @LastEditors: Please set LastEditors
+ -->
 <template>
   <div class="home">
     <img alt="Vue logo" src="../assets/logo.png" />
@@ -8,6 +15,7 @@
 </template>
 
 <script>
+import {http} from "../utils/axios/request"
 export default {
   name: "home",
   components: {},
@@ -15,6 +23,9 @@ export default {
     return {
       input: "输入"
     };
+  },
+  mounted(){
+    http();
   }
 };
 </script>

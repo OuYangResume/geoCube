@@ -1,3 +1,10 @@
+/*
+ * @Description: In User Settings Edit
+ * @Author: your name
+ * @Date: 2019-08-30 09:02:58
+ * @LastEditTime: 2019-09-04 09:47:13
+ * @LastEditors: Please set LastEditors
+ */
 import cubeAxios from "../utils/axios/cubeAxios";
 
 class cubeService {
@@ -8,6 +15,7 @@ class cubeService {
     constructor(options) {
     }
     /**
+     *
      * @description: 根据可视范围查询空间信息
      * @param {paramType} 不传默认查楼栋，1区2街道3社区4网格
      * @param {coordinates} 可视范围(对角线左上角坐标和右下角坐标)几何信息;
@@ -116,6 +124,33 @@ class cubeService {
                     reject(error);
                 });
         });
+    }
+
+    /**
+     * @description: 根据区划code查询区划信息
+     * @param {queryType} default为true父查子
+     * @return: 
+     */
+    static getCubeInfoByAreaCode(areacode,queryType = true){
+     //请求类型；KJ5006为父区划查询子区划面信息,KJ5007根据当前区划查询当前区划信息
+     const paramCode = ["KJ5006", "KJ5007"];
+     let params = {
+         request_type: "post",
+         paramCode: queryType ? paramCode[0] : paramCode[1],
+         areacode: areacode
+     };
+     let url1 = "http://192.168.1.192:9000/ksj_api/common_api/getKjQuery";
+     return new Promise((resolve, reject) => {
+         cubeAxios
+             .Ajax(url1, params)
+             .then(res => {
+
+                 resolve(res);
+             })
+             .catch(error => {
+                 reject(error);
+             });
+     });
     }
 }
 

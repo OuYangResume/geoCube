@@ -1,3 +1,10 @@
+<!--
+ * @Description: 鹰眼图组件与地图联动
+ * @Author: oouyang
+ * @Date: 2019-08-01 09:52:17
+ * @LastEditTime: 2019-09-03 15:27:20
+ * @LastEditors: Please set LastEditors
+ -->
 <template>
   <div :id="mapId"></div>
 </template>
@@ -24,7 +31,6 @@ const mapConfig = {
   units: "degrees",
   ldHeight: 3
 };
-import cubeService from "../service/cubeService";
 import * as turf from "@turf/turf";
 export default {
   data() {
