@@ -12,6 +12,8 @@
     "axios": "^0.19.0",
     "core-js": "^2.6.5",
     "deck.gl": "^7.1.10",
+    "echarts": "^4.2.1",
+    "echartslayer": "^0.1.6",
     "element-ui": "^2.11.1",
     "mapbox-gl": "^1.3.0",
     "md5": "^2.2.1",

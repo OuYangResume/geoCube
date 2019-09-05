@@ -2,24 +2,28 @@
  * @Description: 区划组件与地图联动
  * @Author: oouyang
  * @Date: 2019-09-03 09:10:20
- * @LastEditTime: 2019-09-04 16:00:11
+ * @LastEditTime: 2019-09-05 10:56:23
  * @LastEditors: Please set LastEditors
  -->
 <template>
   <div>
-    <p>{{name}}</p>
+    <p>{{name}}+{{count}}</p>
     <transition name="fade">
       <div class="tree" id="tree">
-        <ul v-for="(item,index) in popList" :key="index.areacode">
-          <li @click="_getItemList(item)">
-            <p style="color:red">{{item.areaname}}</p>
-          </li>
-        </ul>
-        <ul v-for="(nodeItem,nodeIndex) in treeList" :key="nodeIndex">
-          <li @click="_getItemList(nodeItem)">
-            <div style="color:green;">{{nodeItem.areaname}}</div>
-          </li>
-        </ul>
+        <div>
+          <ul v-for="(item,index) in popList" :key="index.areacode">
+            <li @click="_getItemList(item)">
+              <p style="color:red">{{item.areaname}}</p>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <ul v-for="(nodeItem,nodeIndex) in treeList" :key="nodeIndex">
+            <li @click="_getItemList(nodeItem)">
+              <div style="color:green;">{{nodeItem.areaname}}</div>
+            </li>
+          </ul>
+        </div>
       </div>
     </transition>
   </div>
@@ -27,6 +31,7 @@
 
 <script>
 import cubeService from "../service/cubeService";
+import { mapState } from "vuex";
 export default {
   data() {
     return {
@@ -37,15 +42,18 @@ export default {
     };
   },
   props: {
-    areacode: {
-      type: String,
-      required: true
-    }
+    // areacode: {
+    //   type: String,
+    //   required: true
+    // }
   },
-  computed: {},
+  computed: mapState({
+    count: state => state.areacode,
+    countAlias: "count" // 别名 `count` 等价于 state => state.count
+  }),
   watch: {
     //监听areacode的变化
-    areacode: function(val) {
+    count: function(val) {
       console.log(val, "监听areacode的变化");
 
       let code;
@@ -159,8 +167,8 @@ export default {
           if (res.data.success && res.data.retCode === "00000") {
             let list = res.data.data;
             return Promise.resolve(list);
-          }else{
-            console.error("父code查询子区划信息,并构造核心数组数据")
+          } else {
+            console.error("父code查询子区划信息,并构造核心数组数据");
           }
         });
     },
@@ -178,8 +186,8 @@ export default {
           if (res.data.success && res.data.retCode === "00000") {
             let obj = res.data.data;
             return Promise.resolve(obj);
-          }else{
-            console.error("code查询八级区划信息,并构造核心数组数据")
+          } else {
+            console.error("code查询八级区划信息,并构造核心数组数据");
           }
         });
     }

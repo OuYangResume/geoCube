@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-07-22 11:44:31
- * @LastEditTime: 2019-09-02 15:32:09
+ * @LastEditTime: 2019-09-05 14:02:22
  * @LastEditors: Please set LastEditors
  -->
 <template>
@@ -22,7 +22,7 @@ const mapConfig = {
   source: {
     type: "raster",
     tiles: [
-      "http://192.168.1.252:6080/arcgis/rest/services/NSKSJ/DLG_ZQ_NS_SS_1031/MapServer/tile/{z}/{y}/{x}"
+      "http://192.168.1.252:6080/arcgis/rest/services/SZKSJ/DTVEC_ZQ_SS_SZ/MapServer/tile/{z}/{y}/{x}"
     ],
     zoomOffset: 10, // wmts Capabilities信息中TileMatrix第一个对应的实际多少级
     tileSize: 256

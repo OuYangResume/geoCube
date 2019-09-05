@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-30 09:02:58
- * @LastEditTime: 2019-09-04 16:00:46
+ * @LastEditTime: 2019-09-05 11:15:29
  * @LastEditors: Please set LastEditors
  -->
 <template>
@@ -50,7 +50,7 @@ const mapConfig = {
 import OverviewMap from "../../components/OverviewMap.vue";
 import RegionalTree from "../../components/RegionalTree.vue";
 import cubeService from "../../service/cubeService";
-import Vue from "vue";
+import { mapMutations } from "vuex";
 
 export default {
   components: {
@@ -67,8 +67,8 @@ export default {
         type: "FeatureCollection",
         features: []
       },
-      activeName:"second",//鹰眼图与区划切换
-    }
+      activeName: "second" //鹰眼图与区划切换
+    };
   },
   props: {
     mapId: {
@@ -358,11 +358,13 @@ export default {
       let resParentcode;
       // 先判断是否获取到数据
       if (data.success != true) {
-        console.log("根据坐标查询数据失败");
+        console.error("根据坐标查询数据失败");
         return;
       }
       //给全局变量赋值
       vm.areacode = data.data.areacode;
+      //提交至vuex中
+      vm.$store.commit("changeAreaCode", data.data.areacode);
       vm.areaname = data.data.areaname;
 
       //当parentcode为undefined时,则绘制当前区划
@@ -407,7 +409,7 @@ export default {
      * @param {queryType} default为true 绘制父查子图层
      * @return:
      */
-    drawLayerByAreacode(areacode, queryType= true) {
+    drawLayerByAreacode(areacode, queryType = true) {
       let vm = this;
       cubeService.getAreaInfoByAreaCode(areacode, queryType).then(res => {
         console.log(res);
